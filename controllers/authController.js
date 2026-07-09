@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const { User } = require('../models');
 
-// Generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.id, username: user.username, role: user.role },
@@ -11,10 +10,8 @@ const generateToken = (user) => {
   );
 };
 
-// Register new user
 exports.register = async (req, res, next) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -22,7 +19,6 @@ exports.register = async (req, res, next) => {
 
     const { username, email, password, display_name } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({
       where: {
         [require('sequelize').Op.or]: [{ username }, { email }]
@@ -34,19 +30,14 @@ exports.register = async (req, res, next) => {
         error: 'Username or email already exists' 
       });
     }
-
-    // Create user
     const user = await User.create({
       username,
       email,
       password_hash: password,
       display_name: display_name || username
     });
-
-    // Generate token
     const token = generateToken(user);
 
-    // Return user data and token
     res.status(201).json({
       user: {
         id: user.id,
@@ -69,7 +60,6 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// Login user
 exports.login = async (req, res, next) => {
   try {
     // Check validation errors
@@ -88,7 +78,6 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    // Check if user is active
     if (!user.is_active) {
       return res.status(401).json({ error: 'Account is deactivated' });
     }
@@ -142,9 +131,6 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
-// ============================================
-// CHANGE PASSWORD (Authenticated User)
-// ============================================
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
